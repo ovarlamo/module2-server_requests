@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './app.module.css';
+import { Todo } from './components';
 
 export const App = () => {
 	const [tasks, setTasks] = useState([]);
@@ -25,17 +26,9 @@ export const App = () => {
 		<div className={styles.app}>
 			<h3>Список дел</h3>
 			<div className={styles['list-container']}>
-				<ol className={styles.list}>
-					{tasks.map((task, index) => (
-						<li
-							onClick={() => setTaskInput(task)}
-							className={styles['list-item']}
-							key={index}
-						>
-							{task}
-						</li>
-					))}
-				</ol>
+				{tasks.map((task, index) => (
+					<Todo title={task} key={index}></Todo>
+				))}
 			</div>
 			<div>
 				<textarea
