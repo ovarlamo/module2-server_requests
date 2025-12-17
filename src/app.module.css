@@ -39,6 +39,7 @@
 	font-size: 18px;
 	border: none;
 	transition: background-color 0.15s ease;
+	margin-right: 10px;
 }
 
 .button:hover {
