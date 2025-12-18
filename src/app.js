@@ -1,103 +1,81 @@
 import { useEffect, useState } from 'react';
 import styles from './app.module.css';
 import { Todo } from './components';
+import { ControlPanel } from './components/control-panel/control-panel';
+import { getTodos, updateTodo, createTodo, deleteTodo } from './api/api';
+import { SetTodoInTodos, AddTodoInTodos } from './utils';
+import { NEW_TODO_ID } from './constants';
 
 export const App = () => {
 	const [tasks, setTasks] = useState([]);
-	const [selectedTasks, setSelectedTasks] = useState([]);
-	const [taskInput, setTaskInput] = useState('');
-	useEffect(() => {
-		fetch('http://localhost:3005/todos')
-			.then((response) => response.json())
-			.then((data) => {
-				const loadedTasks = data.map((item) => item);
-				setTasks(loadedTasks);
-			})
-			.catch((error) => {
-				console.error('Error fetching tasks:', error);
-			});
-	}, []);
-	const onClickAddTask = () => {
-		if (taskInput.trim() === '') {
-			return;
-		}
-		fetch('http://localhost:3005/todos', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({ name: taskInput.trim() }),
-		})
-			.then((response) => response.json())
-			.then((newTask) => {
-				setTasks((prevTasks) => [...prevTasks, newTask]);
-				setTaskInput('');
-			})
-			.catch((error) => {
-				console.error('Error adding task:', error);
-			});
-	};
-	const onClickDeleteTask = () => {
-		if (selectedTasks.length === 0) {
-			return;
-		}
-		const idsToDelete = [...selectedTasks];
-		if (idsToDelete.length === 0) return;
+	const [isSort, setIsSort] = useState(false);
+	const [searchInput, setSearchInput] = useState('');
 
-		// Delete all selected tasks on the server, then update local state
-		Promise.all(
-			idsToDelete.map((id) =>
-				fetch(`http://localhost:3005/todos/${id}`, { method: 'DELETE' }),
-			),
-		)
-			.then(() => {
-				setTasks((prev) => prev.filter((t) => !idsToDelete.includes(t.id)));
-				setSelectedTasks([]);
-			})
-			.catch((error) => {
-				console.error('Error deleting tasks:', error);
+	useEffect(() => {
+		getTodos().then((data) => setTasks(data));
+	}, []);
+	const addTodo = () => {
+		const newTask = { id: NEW_TODO_ID, name: '', isEdit: true, finished: false };
+		setTasks((prevTasks) => AddTodoInTodos(prevTasks, newTask));
+	};
+	const saveTodo = (id, name, finished) => {
+		if (id === NEW_TODO_ID) {
+			createTodo({ name, finished }).then(({ id }) => {
+				setTasks((prevTasks) =>
+					prevTasks.map((task) =>
+						task.id === NEW_TODO_ID
+							? { ...task, id, isEdit: false, name }
+							: task,
+					),
+				);
 			});
+		} else {
+			updateTodo(id, { name, finished }).then(({ id }) => {
+				setTasks(SetTodoInTodos(tasks, { id, name, finished, isEdit: false }));
+			});
+		}
 	};
-	const onTaskSelectionChange = (taskId, isSelected) => {
-		setSelectedTasks((prevSelectedTasks) => {
-			if (isSelected) {
-				return [...prevSelectedTasks, taskId];
-			} else {
-				return prevSelectedTasks.filter((id) => id !== taskId);
-			}
-		});
+	const deleteTodoFromDotos = (id) => {
+		deleteTodo(id);
+		setTasks((prevTasks) => prevTasks.filter((elem) => elem.id !== id));
 	};
+	const setIsEdit = (id) => {
+		setTasks(SetTodoInTodos(tasks, { id, isEdit: true }));
+	};
+	const sortedTasks = isSort
+		? [...tasks].sort((a, b) => a.name.localeCompare(b.name))
+		: tasks;
+	const tasksToShow = sortedTasks;
+	const tasksFiltered = tasksToShow.filter((task) =>
+		task.name.toLowerCase().includes(searchInput.toLowerCase()),
+	);
 
 	return (
 		<div className={styles.app}>
 			<h3>Список дел</h3>
+			<div>
+				<ControlPanel
+					isSort={isSort}
+					setIsSort={() => setIsSort(!isSort)}
+					addTodo={addTodo}
+					searchInput={searchInput}
+					setSearchInput={setSearchInput}
+				></ControlPanel>
+			</div>
 			<div className={styles['list-container']}>
-				{tasks.map(({ id, name }, index) => (
+				{tasksFiltered.map(({ id, name, finished, isEdit = false }, index) => (
 					<Todo
 						name={name}
 						key={id}
-						onSelectionChange={(isSelected) =>
-							onTaskSelectionChange(id, isSelected)
-						}
-						isSelected={selectedTasks.includes(id)}
+						id={id}
+						finished={finished}
+						saveTodo={saveTodo}
+						isEdit={isEdit}
+						deleteTodo={deleteTodoFromDotos}
+						setIsEdit={() => setIsEdit(id)}
 					></Todo>
 				))}
 			</div>
-			<div>
-				<textarea
-					value={taskInput}
-					onChange={(e) => setTaskInput(e.target.value)}
-					className={styles.textarea}
-					placeholder="Введите новое дело здесь..."
-				></textarea>
-			</div>
-
-			<button onClick={onClickAddTask} className={styles.button} type="button">
-				Добавить дело
-			</button>
-			<button onClick={onClickDeleteTask} className={styles.button} type="button">
-				Удалить дело
-			</button>
 		</div>
 	);
 };
