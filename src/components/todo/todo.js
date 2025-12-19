@@ -2,7 +2,6 @@ import styles from './todo.module.css';
 import { useState } from 'react';
 import { NEW_TODO_ID } from '../../constants';
 export const Todo = ({ id, name, finished, isEdit, saveTodo, deleteTodo, setIsEdit }) => {
-	console.log('Render Todo', id, name, finished, isEdit);
 	const [editName, setEditName] = useState(name);
 
 	const isNew = id === NEW_TODO_ID;

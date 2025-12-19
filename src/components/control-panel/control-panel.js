@@ -1,20 +1,24 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from './control-panel.module.css';
-export const ControlPanel = ({
-	addTodo,
-	setIsSort,
-	isSort,
-	searchInput,
-	setSearchInput,
-}) => {
+import { Debounce } from '../../utils';
+export const ControlPanel = ({ addTodo, setIsSort, isSort, onSearch }) => {
 	const handleAddClick = () => {
 		addTodo();
 	};
+
+	const [searchInput, setSearchInput] = useState('');
+	const debounceOnSearch = useRef(Debounce(onSearch, 1000)).current;
+
+	const onChangeSearchInput = ({ target }) => {
+		setSearchInput(target.value);
+		debounceOnSearch(target.value);
+	};
+
 	return (
 		<div className={styles.controlPanel}>
 			<input
 				value={searchInput}
-				onChange={(e) => setSearchInput(e.target.value)}
+				onChange={onChangeSearchInput}
 				type="text"
 				placeholder="Search..."
 				className={styles.searchInput}
