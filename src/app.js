@@ -10,14 +10,34 @@ export const App = () => {
 	const [tasks, setTasks] = useState([]);
 	const [isSort, setIsSort] = useState(false);
 	const [searchInput, setSearchInput] = useState('');
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null);
 
 	useEffect(() => {
-		getTodos().then((data) => setTasks(data));
+		let isMouted = true;
+		const loadDatas = async () => {
+			setIsLoading(true);
+			setError(false);
+			try {
+				const data = await getTodos();
+				if (!data.ok) {
+					throw new Error(`Ошибка загрузки данных`);
+				}
+				if (isMouted) {
+					setTasks(data);
+				}
+			} catch (err) {
+				if (isMouted) {
+					setError(err.message);
+				}
+			}
+		};
+		loadDatas();
+		return () => {
+			isMouted = false;
+		};
 	}, []);
-	const addTodo = () => {
-		const newTask = { id: NEW_TODO_ID, name: '', isEdit: true, finished: false };
-		setTasks((prevTasks) => AddTodoInTodos(prevTasks, newTask));
-	};
+	const addNewTodo = () => setTasks(AddTodoInTodos(tasks));
 	const saveTodo = (id, name, finished) => {
 		if (id === NEW_TODO_ID) {
 			createTodo({ name, finished }).then(({ id }) => {
@@ -52,30 +72,37 @@ export const App = () => {
 
 	return (
 		<div className={styles.app}>
+			{isLoading && <p>Загрузка...</p>}
+			{error && <p className={styles.error}>Ошибка: {error}</p>}
+
 			<h3>Список дел</h3>
 			<div>
 				<ControlPanel
 					isSort={isSort}
 					setIsSort={() => setIsSort(!isSort)}
-					addTodo={addTodo}
+					addTodo={addNewTodo}
 					searchInput={searchInput}
 					setSearchInput={setSearchInput}
 				></ControlPanel>
 			</div>
-			<div className={styles['list-container']}>
-				{tasksFiltered.map(({ id, name, finished, isEdit = false }, index) => (
-					<Todo
-						name={name}
-						key={id}
-						id={id}
-						finished={finished}
-						saveTodo={saveTodo}
-						isEdit={isEdit}
-						deleteTodo={deleteTodoFromDotos}
-						setIsEdit={() => setIsEdit(id)}
-					></Todo>
-				))}
-			</div>
+			{!isLoading && !error && (
+				<div className={styles['list-container']}>
+					{tasksFiltered.map(
+						({ id, name, finished, isEdit = false }, index) => (
+							<Todo
+								name={name}
+								key={id}
+								id={id}
+								finished={finished}
+								saveTodo={saveTodo}
+								isEdit={isEdit}
+								deleteTodo={deleteTodoFromDotos}
+								setIsEdit={() => setIsEdit(id)}
+							></Todo>
+						),
+					)}
+				</div>
+			)}
 		</div>
 	);
 };
