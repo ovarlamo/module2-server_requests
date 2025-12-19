@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './app.module.css';
 import { Todo } from './components';
 import { ControlPanel } from './components/control-panel/control-panel';
 import { getTodos, updateTodo, createTodo, deleteTodo } from './api/api';
-import { SetTodoInTodos, AddTodoInTodos, Debounce } from './utils';
+import { SetTodoInTodos, AddTodoInTodos } from './utils';
 import { NEW_TODO_ID } from './constants';
 
 export const App = () => {
@@ -13,22 +13,21 @@ export const App = () => {
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
 
-	const loadDatas = async () => {
-		setError(false);
-		try {
-			const data = await getTodos(isSort, searchStr);
-
-			setTasks(data);
-		} catch (err) {
-			setIsLoading(false);
-			setError(err.message);
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
 	useEffect(() => {
-		loadDatas(isSort, setSearchStr);
+		const loadDatas = async () => {
+			setError(false);
+			try {
+				const data = await getTodos(isSort, searchStr);
+
+				setTasks(data);
+			} catch (err) {
+				setIsLoading(false);
+				setError(err.message);
+			} finally {
+				setIsLoading(false);
+			}
+		};
+		loadDatas();
 	}, [isSort, searchStr]);
 
 	const addNewTodo = () => setTasks(AddTodoInTodos(tasks));
