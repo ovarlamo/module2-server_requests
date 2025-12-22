@@ -38,7 +38,7 @@ export const getTodos = (isSort = false, searchInput = '') => {
 	});
 };
 export const updateTodo = (id, data) => {
-	return set(ref(db, `todos/${id}`), data).then((id) => id);
+	return set(ref(db, `todos/${id}`), data);
 };
 
 export const createTodo = (data) => {
