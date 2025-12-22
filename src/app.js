@@ -33,7 +33,7 @@ export const App = () => {
 	const addNewTodo = () => setTasks(AddTodoInTodos(tasks));
 	const saveTodo = (id, name, finished) => {
 		if (id === NEW_TODO_ID) {
-			createTodo({ name, finished }).then(({ id }) => {
+			createTodo({ name, finished }).then((id) => {
 				setTasks((prevTasks) =>
 					prevTasks.map((task) =>
 						task.id === NEW_TODO_ID
