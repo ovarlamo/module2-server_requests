@@ -2,24 +2,6 @@ import { orderByChild, query, ref, get, push, set, remove } from 'firebase/datab
 import { NEW_TODO_ID } from '../constants';
 import { db } from '../firebase';
 
-const fetchServer = (method = 'GET', id, payload, params) => {
-	const { isSort, searchInput } = params || { isSort: false, searchInput: '' };
-	const url =
-		'http://localhost:3005/todos' +
-		(id !== NEW_TODO_ID && id !== undefined ? `/${id}` : '') +
-		'?_sort=' +
-		(isSort ? 'name' : 'id') +
-		(searchInput !== '' ? `&name_like=${encodeURIComponent(searchInput)}` : '');
-
-	return fetch(url, {
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		method,
-		body: payload ? JSON.stringify(payload) : null,
-	});
-};
-
 export const getTodos = (isSort = false, searchInput = '') => {
 	const dbRef = ref(db, 'todos');
 
@@ -41,8 +23,9 @@ export const updateTodo = (id, data) => {
 	return set(ref(db, `todos/${id}`), data);
 };
 
-export const createTodo = (data) => {
-	return push(ref(db, 'todos'), data).then(({ key }) => key);
+export const createTodo = async (data) => {
+	const { key } = await push(ref(db, 'todos'), data);
+	return key;
 };
 export const deleteTodo = (id) => {
 	return remove(ref(db, `todos/${id}`));
