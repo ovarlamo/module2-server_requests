@@ -43,9 +43,9 @@ export const App = () => {
 				);
 			});
 		} else {
-			updateTodo(id, { name, finished }).then(({ id }) => {
-				setTasks(SetTodoInTodos(tasks, { id, name, finished, isEdit: false }));
-			});
+			updateTodo(id, { name, finished }).then(
+				setTasks(SetTodoInTodos(tasks, { id, name, finished, isEdit: false })),
+			);
 		}
 	};
 	const deleteTodoFromDotos = (id) => {
