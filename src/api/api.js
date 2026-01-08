@@ -1,5 +1,6 @@
 import { NEW_TODO_ID } from '../constants';
 const fetchServer = (method = 'GET', id, payload, params) => {
+	console.log('fetchServer', id, payload, params);
 	const { isSort, searchInput } = params || { isSort: false, searchInput: '' };
 	const url =
 		'http://localhost:3005/todos' +

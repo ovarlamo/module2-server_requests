@@ -1,17 +1,36 @@
 import styles from './todo.module.css';
-import { useState } from 'react';
 import { NEW_TODO_ID } from '../../constants';
-export const Todo = ({ id, name, finished, isEdit, saveTodo, deleteTodo, setIsEdit }) => {
-	const [editName, setEditName] = useState(name);
+import { useDispatch, useSelector } from 'react-redux';
+import { deleteTodoAction } from '../../actions/delete-todo';
+import { saveTodoAction } from '../../actions/save-todo';
+export const Todo = ({ id, name, finished }) => {
+	const dispatch = useDispatch();
+	const editName = useSelector((state) => state.editTodo.name);
 
 	const isNew = id === NEW_TODO_ID;
+	const isEditMode = useSelector(
+		(state) => state.editTodo.id === id && state.editTodo.isEdit,
+	);
+
 	const onChangeName = ({ target }) => {
-		setEditName(target.value);
+		dispatch({
+			type: 'SET_EDIT_TODO',
+			payload: { id, name: target.value, finished, isEdit: true },
+		});
 	};
-	const onClickSaveButton = () => saveTodo(id, editName, finished);
-	const onClickDeleteButton = () => deleteTodo(id);
+	const onClickSaveButton = () => dispatch(saveTodoAction(id, editName, finished));
+	const onClickDeleteButton = () => dispatch(deleteTodoAction(id));
+
 	const onChangeCheckbox = () => {
-		saveTodo(id, editName, !finished);
+		dispatch(saveTodoAction(id, editName, !finished));
+	};
+	const onClickTodoName = () => {
+		if (!isNew) {
+			dispatch({
+				type: 'SET_EDIT_TODO',
+				payload: { id, name, finished, isEdit: true },
+			});
+		}
 	};
 
 	return (
@@ -24,7 +43,7 @@ export const Todo = ({ id, name, finished, isEdit, saveTodo, deleteTodo, setIsEd
 				disabled={isNew}
 			/>
 			<div className={styles.todoName}>
-				{isEdit ? (
+				{isEditMode ? (
 					<input
 						type="text"
 						className={styles.inputText}
@@ -33,11 +52,11 @@ export const Todo = ({ id, name, finished, isEdit, saveTodo, deleteTodo, setIsEd
 						onChange={onChangeName}
 					/>
 				) : (
-					<span onClick={setIsEdit}>{name}</span>
+					<span onClick={onClickTodoName}>{name}</span>
 				)}
 			</div>
 			<div className={styles.blockButtons}>
-				{isEdit ? (
+				{isEditMode ? (
 					<button className={styles.button} onClick={onClickSaveButton}>
 						✎
 					</button>

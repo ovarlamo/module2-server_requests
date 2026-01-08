@@ -2,59 +2,37 @@ import { useEffect, useState } from 'react';
 import styles from './app.module.css';
 import { Todo } from './components';
 import { ControlPanel } from './components/control-panel/control-panel';
-import { getTodos, updateTodo, createTodo, deleteTodo } from './api/api';
-import { SetTodoInTodos, AddTodoInTodos } from './utils';
-import { NEW_TODO_ID } from './constants';
+
+import { useDispatch, useSelector } from 'react-redux';
+
+import { loadTodos } from './actions/load-todos';
 
 export const App = () => {
-	const [tasks, setTasks] = useState([]);
-	const [isSort, setIsSort] = useState(false);
-	const [searchStr, setSearchStr] = useState('');
+	const dispatch = useDispatch();
+	const tasks = useSelector((state) => state.todos);
+	const isSort = useSelector((state) => state.options.isSort);
+	const searchStr = useSelector((state) => state.options.searchStr);
+
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
+	const setTasks = () => {};
 
 	useEffect(() => {
 		const loadDatas = async () => {
+			setIsLoading(true);
 			setError(false);
 			try {
-				const data = await getTodos(isSort, searchStr);
-
-				setTasks(data);
+				dispatch(loadTodos(isSort, searchStr));
 			} catch (err) {
 				setIsLoading(false);
 				setError(err.message);
 			} finally {
+				console.log('useEffect->loadDatas');
 				setIsLoading(false);
 			}
 		};
 		loadDatas();
 	}, [isSort, searchStr]);
-
-	const addNewTodo = () => setTasks(AddTodoInTodos(tasks));
-	const saveTodo = (id, name, finished) => {
-		if (id === NEW_TODO_ID) {
-			createTodo({ name, finished }).then(({ id }) => {
-				setTasks((prevTasks) =>
-					prevTasks.map((task) =>
-						task.id === NEW_TODO_ID
-							? { ...task, id, isEdit: false, name }
-							: task,
-					),
-				);
-			});
-		} else {
-			updateTodo(id, { name, finished }).then(({ id }) => {
-				setTasks(SetTodoInTodos(tasks, { id, name, finished, isEdit: false }));
-			});
-		}
-	};
-	const deleteTodoFromDotos = (id) => {
-		deleteTodo(id);
-		setTasks((prevTasks) => prevTasks.filter((elem) => elem.id !== id));
-	};
-	const setIsEdit = (id) => {
-		setTasks(SetTodoInTodos(tasks, { id, isEdit: true }));
-	};
 
 	return (
 		<div className={styles.app}>
@@ -63,12 +41,7 @@ export const App = () => {
 
 			<h3>Список дел</h3>
 			<div>
-				<ControlPanel
-					isSort={isSort}
-					setIsSort={() => setIsSort(!isSort)}
-					addTodo={addNewTodo}
-					onSearch={setSearchStr}
-				></ControlPanel>
+				<ControlPanel></ControlPanel>
 			</div>
 			{!isLoading && !error && (
 				<div className={styles['list-container']}>
@@ -78,10 +51,7 @@ export const App = () => {
 							key={id}
 							id={id}
 							finished={finished}
-							saveTodo={saveTodo}
 							isEdit={isEdit}
-							deleteTodo={deleteTodoFromDotos}
-							setIsEdit={() => setIsEdit(id)}
 						></Todo>
 					))}
 				</div>
